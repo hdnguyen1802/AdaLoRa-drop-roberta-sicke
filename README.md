@@ -4,12 +4,12 @@
 
 ---
 
-## 🧠 Motivation
+## Motivation
 Full model fine‑tuning of RoBERTa‑base (~125M params) is compute‑ and memory‑heavy—overkill for a small dataset like **SICK‑E (~9.8k pairs)**. Adapter‑style methods (LoRA/AdaLoRA) update a tiny set of weights while keeping the backbone frozen. Our approach, **AdaLoRA‑Drop**, pushes parameter efficiency further by **(1)** adapting rank per layer (AdaLoRA) and **(2)** **sharing** adapter modules across low‑importance layers (inspired by LoRA‑Drop’s ΔWx‑based importance).
 
 ---
 
-## ✨ Key ideas
+## Key ideas
 - **Two‑stage procedure**
   1) **Importance estimation** on a small data slice using ΔWx energy; sort layers and mark a minimal set that covers 90–95% cumulative importance as **high‑importance**.
   2) **Fine‑tuning with AdaLoRA**: give **individual** AdaLoRA modules to high‑importance layers; **share one module per shape group** across the remaining low‑importance layers.
@@ -18,7 +18,7 @@ Full model fine‑tuning of RoBERTa‑base (~125M params) is compute‑ and memo
 
 ---
 
-## 📊 Results (SICK‑E test accuracy vs. trainable params)
+## Results (SICK‑E test accuracy vs. trainable params)
 
 | Model | Trainable Params | Test Acc. |
 |---|---:|---:|
@@ -33,32 +33,32 @@ Full model fine‑tuning of RoBERTa‑base (~125M params) is compute‑ and memo
 
 ---
 
-## 📦 Repository structure
+## Repository structure
 ```
 .
-├── ada-drop.ipynb                     # End‑to‑end notebook: importance scoring + AdaLoRA‑Drop FT
-├── slides/                            # Overview deck
+adalora-drop-roberta-sicke/
+├── notebooks/
+│   └── ada-drop.ipynb
+├── data/
+│   ├── SICK_train.txt
+│   ├── SICK_test.txt
+│   └── SICK_trial.txt
+├── slides/
 │   └── AdaLoRA-Drop-Parameter-Efficient-RoBERTa-Fine-Tuning-on-SICK-E.pptx
-├── src/
-│   ├── data.py                        # SICK‑E dataset loading utilities
-│   ├── modeling.py                    # LoRA/AdaLoRA adapters & sharing logic
-│   ├── importance.py                  # ΔWx importance estimation
-│   ├── train.py                       # CLI training entrypoint (optional)
-│   └── eval.py                        # Evaluation utilities
-├── requirements.txt                   # Python deps
 └── README.md
+
 ```
 *Note:* Only the notebook and slides are included initially; `src/` and scripts are optional helpers if you want a scriptified version.
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ### 1) Environment
 - Python ≥ 3.10
 - PyTorch (CUDA recommended)
 - `transformers`, `datasets`, `accelerate`
-- `peft` (for LoRA/AdaLoRA), `scikit-learn`, `tqdm`
+- `peft` (for LoRA/AdaLoRA), `tqdm`
 
 Create an environment and install:
 ```bash
@@ -66,7 +66,7 @@ python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -U pip wheel
 pip install torch torchvision torchaudio  # choose the right CUDA build for your system
-pip install transformers datasets accelerate peft scikit-learn tqdm
+pip install transformers datasets accelerate peft tqdm
 ```
 
 ### 2) Data: SICK‑E (local files)
@@ -86,22 +86,6 @@ trial = pd.read_csv('data/SICK_trial.txt', sep='	')
 test  = pd.read_csv('data/SICK_test.txt',  sep='	')
 ```
 
-Or build a 🤗 Datasets dataset from the TSV files:
-```python
-from datasets import DatasetDict, Dataset
-import pandas as pd
-train = Dataset.from_pandas(pd.read_csv('data/SICK_train.txt', sep='	'))
-trial = Dataset.from_pandas(pd.read_csv('data/SICK_trial.txt', sep='	'))
-test  = Dataset.from_pandas(pd.read_csv('data/SICK_test.txt',  sep='	'))
-raw = DatasetDict({
-    'train': train,
-    'validation': trial,  # SICK provides a trial/dev split
-    'test': test
-})
-```
-
-> If you prefer the hosted copy, you can still use `datasets.load_dataset("sick")`, but the notebook is set up to read the **local** files by default.
-
 ### 3) Run the notebook
 Open **`ada-drop.ipynb`** and run all cells. The notebook covers:
 - Importance estimation on a small subset (e.g., ~10% of train split)
@@ -109,22 +93,7 @@ Open **`ada-drop.ipynb`** and run all cells. The notebook covers:
 - AdaLoRA‑Drop fine‑tuning (target rank small, e.g., r=4)
 - Evaluation on the SICK‑E test set
 
-### 4) (Optional) Scripted training
-If you prefer CLI over notebooks, adapt the provided `src/` stubs:
-```bash
-python -m src.train \
-  --model roberta-base \
-  --dataset sick \
-  --epochs 5 \
-  --batch_size 64 \
-  --lr 2e-4 \
-  --adalora_target_rank 4 \
-  --importance_threshold 0.90  # or 0.95
-```
-
----
-
-## ⚙️ Method details
+## Method details
 
 ### Stage 1 — Importance estimation
 - Attach low‑rank adapters with small rank to targeted layers.
@@ -141,20 +110,20 @@ python -m src.train \
 
 ---
 
-## 🔬 Reproducing the table
+## Reproducing the table
 - Use the notebook’s experiment grid to toggle: **Full FT**, **LoRA‑all**, **LoRA‑Drop@95**, **AdaLoRA‑all**, **AdaLoRA‑Drop@95/90**.
 - Track **trainable parameter counts** by summing adapter parameters only.
 - Report **test accuracy** on SICK‑E.
 
 ---
 
-## 📎 Notes & limitations
+## Notes & limitations
 - Currently evaluated only on **SICK‑E** with **RoBERTa‑base**.
 - ΔWx energy is a simple importance proxy; other signals (e.g., gradient‑based) might further improve selection.
 
 ---
 
-## 📚 References
+## References
 - **LoRA Without Regret**
 - **AdaLoRA: Adaptive Budget Allocation for Parameter‑Efficient Fine‑Tuning**
 - **LoRA‑Drop: Efficient LoRA Parameter Pruning based on Output Evaluation**
@@ -162,25 +131,3 @@ python -m src.train \
 (See the slides for concise conceptual diagrams and comparisons.)
 
 ---
-
-## 📝 License
-MIT
-
----
-
-## 🙌 Acknowledgments
-- Built on 🤗 Transformers & Datasets, PEFT, and PyTorch.
-- Inspired by LoRA/AdaLoRA/LoRA‑Drop lines of work.
-
----
-
-## 🤝 How to cite
-```bibtex
-@software{adalora_drop_sicke_2025,
-  title        = {AdaLoRA‑Drop: Parameter‑Efficient RoBERTa Fine‑Tuning on SICK‑E},
-  author       = {Your Name},
-  year         = {2025},
-  url          = {https://github.com/<your‑org>/adalora-drop-roberta-sicke}
-}
-```
-
