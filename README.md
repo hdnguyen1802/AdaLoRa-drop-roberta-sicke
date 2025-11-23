@@ -37,14 +37,11 @@ Full model fine‑tuning of RoBERTa‑base (~125M params) is compute‑ and memo
 ```
 .
 adalora-drop-roberta-sicke/
-├── notebooks/
-│   └── ada-drop.ipynb
-├── data/
-│   ├── SICK_train.txt
-│   ├── SICK_test.txt
-│   └── SICK_trial.txt
-├── slides/
-│   └── AdaLoRA-Drop-Parameter-Efficient-RoBERTa-Fine-Tuning-on-SICK-E.pptx
+├── ada-drop.ipynb
+├── SICK_train.txt
+├── SICK_test.txt
+├── SICK_trial.txt
+├── AdaLoRA-Drop-Parameter-Efficient-RoBERTa-Fine-Tuning-on-SICK-E.pptx
 └── README.md
 
 ```
@@ -72,18 +69,18 @@ pip install transformers datasets accelerate peft tqdm
 ### 2) Data: SICK‑E (local files)
 Place the three SICK files under `data/` exactly as follows:
 
-- `data/SICK_train.txt`
-- `data/SICK_test.txt`
-- `data/SICK_trial.txt`
+- `SICK_train.txt`
+- `SICK_test.txt`
+- `SICK_trial.txt`
 
 They are **tab-separated** with headers `pair_ID, sentence_A, sentence_B, relatedness_score, entailment_judgment`.
 
 Example loader (pandas):
 ```python
 import pandas as pd
-train = pd.read_csv('data/SICK_train.txt', sep='	')
-trial = pd.read_csv('data/SICK_trial.txt', sep='	')
-test  = pd.read_csv('data/SICK_test.txt',  sep='	')
+train = pd.read_csv('SICK_train.txt', sep='	')
+trial = pd.read_csv('SICK_trial.txt', sep='	')
+test  = pd.read_csv('SICK_test.txt',  sep='	')
 ```
 
 ### 3) Run the notebook
